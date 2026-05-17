@@ -1,4 +1,15 @@
-Pipeline: Strand-Aware Promoter Core Extraction EngineArchitectural workflow for generating high-fidelity, 500 bp promoter intervals anchored to the human (hg38) Transcription Start Site (TSS) for downstream Motif Analysis and Gene Ontology (GO) enrichment.🛠️ Compute Environment SpecificationTo guarantee cross-platform reproducibility, execution environments are strictly isolated via virtualized micro-environments using mamba/conda packages distributed through the Bioconda channel.Bash# 1. Initialize structural virtual environment environment
+# Pipeline: Strand-Aware Promoter Core Extraction Engine
+
+> Architectural bioinformatic workflow for generating high-fidelity, 500 bp promoter intervals anchored to the human (hg38) Transcription Start Site (TSS). Designed specifically to format raw coordinates for downstream Motif Discovery, Scanning, and Gene Ontology (GO) enrichment pipelines.
+
+---
+
+## 🛠️ Compute Environment Specification
+
+To guarantee cross-platform reproducibility, execution environments are strictly isolated via virtualized micro-environments using `mamba`/`conda` packages distributed through the **Bioconda** channel.
+
+```bash
+# 1. Initialize structural virtual environment
 mamba create --name genomic_extraction_env python=3.12 --yes
 mamba activate genomic_extraction_env
 
@@ -51,14 +62,14 @@ NR > 1 {
 
 # Boundary Filter Checkpoint: Discard scaffold fragments not represented inside hg38.genome
 grep -Fwf <(cut -f1 hg38.genome) genes_tss_clean.bed > genes_tss_final.bed
-Output BED6 ColumnData TypeInternal Attribute Value MappingCol 1: ChromosomeStringUCSC nomenclature format prefix (chr1 ... chrX, chrM)Col 2: StartIntegerExact genomic position of the Transcription Start SiteCol 3: EndIntegerClosed-interval tracking coordinate limit ($Start + 1$)Col 4: NameStringPrimary lookup index key compound identifier stringCol 5: ScoreCharacterUnutilized structural filler attribute (.)Col 6: StrandCharacterDirectional feature orientation tracker (+ or -)Stage 3: Strand-Sensitive Directional Window ScalingTo isolate the upstream promoter environment, calculations must change behavior based on the strand orientation flag. Standard coordinate expansion expands coordinates symmetric or blind to direction. Here, we use directional parameters via bedtools slop.Bashbedtools slop \
+Output BED6 Layout Specifications:Output BED6 ColumnData TypeInternal Attribute Value MappingCol 1: ChromosomeStringUCSC nomenclature format prefix (chr1 ... chrX, chrM)Col 2: StartIntegerExact genomic position of the Transcription Start SiteCol 3: EndIntegerClosed-interval tracking coordinate limit ($Start + 1$)Col 4: NameStringPrimary lookup index key compound identifier stringCol 5: ScoreCharacterUnutilized structural filler attribute (.)Col 6: StrandCharacterDirectional feature orientation tracker (+ or -)Stage 3: Strand-Sensitive Directional Window ScalingTo isolate the upstream promoter environment, calculations must change behavior based on the strand orientation flag. Standard coordinate expansion expands coordinates symmetrically or blind to direction. Here, we use directional parameters via bedtools slop.Bashbedtools slop \
     -i genes_tss_final.bed \
     -g hg38.genome \
     -l 500 \
     -r 0 \
     -s \
     > promoters_500bp.bed
-Directional Math Transformations Applied:The -s runtime parameter changes coordinate transformations using the following mathematical logic:Sense Orientation ($+$ Strand): The upstream direction moves left toward lower index coordinates.$$\text{New Start} = \max(0, \text{Original Start} - 500)$$$$\text{New End} = \text{Original End}$$Antisense Orientation ($-$ Strand): The upstream direction moves right toward higher index coordinates.$$\text{New Start} = \text{Original Start}$$$$\text{New End} = \min(\text{Chromosome Limit}, \text{Original End} + 500)$$🚀 Unified Core Bash Script Pipeline (run_pipeline.sh)This self-contained executable contains safety locks (set -euo pipefail) to ensure immediate process termination if any intermediate pipeline subprocess returns an error code.Bash#!/usr/bin/env bash
+Directional Math Transformations Applied:The -s runtime parameter shifts coordinate transformations using the following mathematical logic:Sense Orientation ($+$ Strand): The upstream direction moves left toward lower index coordinates.$$\text{New Start} = \max(0, \text{Original Start} - 500)$$$$\text{New End} = \text{Original End}$$Antisense Orientation ($-$ Strand): The upstream direction moves right toward higher index coordinates.$$\text{New Start} = \text{Original Start}$$$$\text{New End} = \min(\text{Chromosome Limit}, \text{Original End} + 500)$$🚀 Unified Core Bash Script Pipeline (run_pipeline.sh)This self-contained executable contains safety locks (set -euo pipefail) to ensure immediate process termination if any intermediate pipeline subprocess returns an error code.Bash#!/usr/bin/env bash
 set -euo pipefail
 
 # Confirm presence of runtime data inputs
